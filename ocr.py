@@ -12,8 +12,8 @@ class paddle_ocr:
     def load_model(self):
         self.ocr = PaddleOCR(
             lang="en",
-            text_detection_model_dir="model\det",
-            text_recognition_model_dir="model\rec",
+            text_detection_model_dir="model/det",
+            text_recognition_model_dir="model/rec",
         )
 
         self.yolo = YOLO('model/yolo-pose.pt')
