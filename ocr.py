@@ -18,6 +18,16 @@ class paddle_ocr:
 
         self.yolo = YOLO('model/yolo-pose.pt')
 
+    def warmup(self):
+        dummy_img = np.zeros((640, 640, 3), dtype=np.uint8)
+
+        try:
+            _ = self.yolo(dummy_img, verbose=False)
+
+            _ = self.ocr.ocr(dummy_img, cls=True)
+        except Exception as e:
+            print(f"{e}")
+
     def get_info(self):
         info = {
             "device": self.device,
@@ -75,3 +85,4 @@ class paddle_ocr:
                     return self.ocr.ocr(flat_invoice, cls=True)
 
         raise ValueError("YOLO did not detect any keypoints")
+

@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 import  traceback
 from contextlib import asynccontextmanager
+from starlette.concurrency import run_in_threadpool
 
 from ocr import paddle_ocr
 
@@ -17,6 +18,8 @@ async def lifespan(app: FastAPI):
     print("Loading mdoels")
     app_state["model"] = paddle_ocr()
     print("Loading success")
+    # app_state.get("model").warmup()
+    print("Warm up success")
     yield
     app_state.clear()
 
@@ -111,7 +114,7 @@ async def inference(file: UploadFile = File(...)):
         if image is None:
             raise HTTPException(status_code=400, detail="Invalid image file")
 
-        result = model.inference(image)
+        result = await run_in_threadpool(model.inference, image)
 
         if image is None:
             raise HTTPException(status_code=400, detail="Image not found")
