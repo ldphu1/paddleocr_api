@@ -1,8 +1,13 @@
 import torch
 from paddleocr import PaddleOCR
+import paddle
+paddle.is_compiled_with_cuda = lambda: True
 from ultralytics import YOLO
 import cv2
 import numpy as np
+import os
+os.environ["YOLO_AUTOINSTALL"] = "False"
+
 
 class paddle_ocr:
     def __init__(self):
@@ -11,12 +16,19 @@ class paddle_ocr:
 
     def load_model(self):
         self.ocr = PaddleOCR(
+            use_onnx=True,
+            use_gpu=True,
             lang="en",
-            text_detection_model_dir="model/det",
-            text_recognition_model_dir="model/rec",
+            det_model_dir="model/det/inference.onnx",
+            rec_model_dir="model/rec/inference.onnx",
+            show_log=True,
+            providers=[
+                "CUDAExecutionProvider",
+                "CPUExecutionProvider"
+            ]
         )
 
-        self.yolo = YOLO('model/yolo-pose.pt')
+        self.yolo = YOLO('model/yolo-pose.onnx')
 
     def warmup(self):
         dummy_img = np.zeros((640, 640, 3), dtype=np.uint8)
@@ -72,7 +84,6 @@ class paddle_ocr:
 
         return flat_invoice
 
-
     def inference(self, image):
         yolo_result = self.yolo(image)
 
@@ -82,7 +93,28 @@ class paddle_ocr:
 
                 if len(keypoints) == 4:
                     flat_invoice =  self.perspective(image, keypoints)
+                    # print(self.ocr.args.use_gpu)
+                    # print(type(self.ocr.text_detector.predictor))
+                    # print(type(self.ocr.text_recognizer.predictor))
+                    # print(self.ocr.text_detector.predictor.get_providers())
+                    # print(self.ocr.text_recognizer.predictor.get_providers())
+                    # print(self.ocr.text_recognizer.__dict__)
+                    # print("*"*10)
+                    # import inspect
+                    # print(inspect.getfile(type(self.ocr.text_recognizer)))
+                    # print("*"*10)
+                    # print(ort.__version__)
+                    # print(ort.get_available_providers())
+
+                    # sess = ort.InferenceSession(
+                    #     "model/rec/inference.onnx",
+                    #     providers=["CUDAExecutionProvider"]
+                    # )
+                    #
+                    # print(sess.get_providers())
+                    # print("+" * 10)
                     return self.ocr.ocr(flat_invoice, cls=True)
 
         raise ValueError("YOLO did not detect any keypoints")
+
 

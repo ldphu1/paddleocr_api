@@ -9,6 +9,7 @@ import  traceback
 from contextlib import asynccontextmanager
 from starlette.concurrency import run_in_threadpool
 
+
 from ocr import paddle_ocr
 
 app_state = {}
@@ -108,17 +109,18 @@ async def inference(file: UploadFile = File(...)):
 
         if not file.content_type.startswith("image/"):
             raise HTTPException(status_code=400, detail="File is not image.")
-
+        t0 = time.time()
         image = await pre_img(file)
+        preprocess_time = round((time.time() - t0) * 1000, 2)
 
         if image is None:
             raise HTTPException(status_code=400, detail="Invalid image file")
 
+        t1 = time.time()
         result = await run_in_threadpool(model.inference, image)
+        inference_time = round((time.time() - t1) * 1000, 2)
 
-        if image is None:
-            raise HTTPException(status_code=400, detail="Image not found")
-
+        t2 = time.time()
         ocr_lines = []
         if result and result[0]:
             for line in result[0]:
@@ -130,7 +132,9 @@ async def inference(file: UploadFile = File(...)):
                     "confidence": round(confidence_score, 2)
                 })
 
-        inference_time_ms = round((time.time() - start_time), 2)
+        postprocess_time = round((time.time() - t2) * 1000, 2)
+
+        total = preprocess_time + inference_time + postprocess_time
 
         return JSONResponse(
             status_code=200,
@@ -139,7 +143,12 @@ async def inference(file: UploadFile = File(...)):
                 "status": "success",
                 "total_lines": len(ocr_lines),
                 "predictions": ocr_lines,
-                "inference_time_ms": inference_time_ms
+                "latency": {
+                    "preprocess_time": preprocess_time,
+                    "inference_time": inference_time,
+                    "postprocess_time": postprocess_time,
+                    "total": total
+                },
             }
         )
     except HTTPException as http_exc:
@@ -147,7 +156,7 @@ async def inference(file: UploadFile = File(...)):
 
     except Exception as e:
         error_trace = traceback.format_exc()
-        inference_time_ms = round((time.time() - start_time), 2)
+        inference_time_ms = round((time.time() - start_time) * 1000, 2)
 
         print(f"\n[ERROR] Request_ID: {req_id}")
         print(f"[ERROR] Traceback:\n{error_trace}")
