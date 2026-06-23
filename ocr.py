@@ -17,7 +17,7 @@ class paddle_ocr:
     def load_model(self):
         self.ocr = PaddleOCR(
             use_onnx=True,
-            use_gpu=True,
+            use_gpu=False,
             lang="en",
             det_model_dir="model/det/inference.onnx",
             rec_model_dir="model/rec/inference.onnx",
@@ -93,26 +93,6 @@ class paddle_ocr:
 
                 if len(keypoints) == 4:
                     flat_invoice =  self.perspective(image, keypoints)
-                    # print(self.ocr.args.use_gpu)
-                    # print(type(self.ocr.text_detector.predictor))
-                    # print(type(self.ocr.text_recognizer.predictor))
-                    # print(self.ocr.text_detector.predictor.get_providers())
-                    # print(self.ocr.text_recognizer.predictor.get_providers())
-                    # print(self.ocr.text_recognizer.__dict__)
-                    # print("*"*10)
-                    # import inspect
-                    # print(inspect.getfile(type(self.ocr.text_recognizer)))
-                    # print("*"*10)
-                    # print(ort.__version__)
-                    # print(ort.get_available_providers())
-
-                    # sess = ort.InferenceSession(
-                    #     "model/rec/inference.onnx",
-                    #     providers=["CUDAExecutionProvider"]
-                    # )
-                    #
-                    # print(sess.get_providers())
-                    # print("+" * 10)
                     return self.ocr.ocr(flat_invoice, cls=True)
 
         raise ValueError("YOLO did not detect any keypoints")
