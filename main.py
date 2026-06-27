@@ -19,7 +19,7 @@ async def lifespan(app: FastAPI):
     print("Loading mdoels")
     app_state["model"] = paddle_ocr()
     print("Loading success")
-    # app_state.get("model").warmup()
+    app_state.get("model").warmup()
     print("Warm up success")
     yield
     app_state.clear()
@@ -43,7 +43,6 @@ async def health_check():
         if hasattr(model, 'yolo') and hasattr(model, 'ocr'):
             return {
                 "status": "healthy",
-                "device": model.device,
                 "message": "System is ready to inference"
             }
         else:

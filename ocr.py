@@ -52,7 +52,7 @@ class paddle_ocr:
             "paddle_ocr": {
                 "framework": "PaddleOCR",
                 "language": "en",
-                "use_gpu": (self.device == "cuda"),
+                "use_gpu": paddle.device.get_device(),
                 "det_algorithm": "DB",
                 "rec_algorithm": "SVTR_LCNet"
             }

@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  ocr_api:
+    build: .
+    container_name: ocr
+    ports:
+      - "8000:8000"
+    environment:
+      - MODEL_PATH=./model
+      - DEVICE=cpu
+      - CONF_THRESHOLD=0.5
+      - YOLO_AUTOINSTALL=False
+      - ORT_CUDA_CONV_ALGO_SEARCH=DEFAULT
+
+    volumes:
+      - .:/app
+
+    restart: unless-stopped
